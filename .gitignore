@@ -1,0 +1,4 @@
+libuthread/*.swp
+libuthread/*.o
+libuthread/*.a
+libuthread/*.d
