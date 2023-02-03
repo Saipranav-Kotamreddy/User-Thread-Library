@@ -42,7 +42,7 @@ CFLAGS 	+= -I$(UTHREADPATH)
 CFLAGS	+= -MMD
 
 # Linker options
-LDFLAGS := -L$(UTHREADPATH) -libuthread
+LDFLAGS := -L$(UTHREADPATH) -luthread
 
 # Application objects to compile
 objs := $(patsubst %.x,%.o,$(programs))
