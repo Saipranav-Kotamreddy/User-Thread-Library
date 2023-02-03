@@ -49,7 +49,7 @@ void test_queue_simple(void)
 	q = queue_create();
 	queue_enqueue(q, &data);
 	TEST_ASSERT(queue_length(q)==1);
-	TEST_ASSERT(queue_destroy(q)==0);
+	TEST_ASSERT(queue_destroy(q)==-1);
 	queue_dequeue(q, (void**)&ptr);
 	TEST_ASSERT(ptr == &data);
 	TEST_ASSERT(queue_length(q)==0);
@@ -70,7 +70,7 @@ void test_queue_delete(void){
 	queue_enqueue(q, &data2);
 	queue_enqueue(q, &data3);
 	TEST_ASSERT(queue_length(q)==3);
-	queue_delete(q, &data2);
+	TEST_ASSERT(queue_delete(q, &data2)==0);
 	TEST_ASSERT(queue_length(q)==2);
 	queue_dequeue(q, (void**)&destPtr);
 	TEST_ASSERT(destPtr==&data1);
