@@ -1,8 +1,12 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <assert.h>
 #include <queue.h>
+
+typedef struct queue* queue_t;
+
+typedef void (*queue_func_t)(queue_t queue, void *data);
 
 #define TEST_ASSERT(assert)				\
 do {									\
@@ -19,10 +23,10 @@ static void iterator_inc(queue_t q, void* data){
 	int* a = (int*)data;
 
 	if(*a==2){
-		*a=-1;
+		*a=queue_length(q)-3;
 	}
 	else{
-		*a++;
+		*a += 1;
 	}
 }
 
@@ -69,9 +73,9 @@ void test_queue_delete(void){
 	queue_delete(q, &data2);
 	TEST_ASSERT(queue_length(q)==2);
 	queue_dequeue(q, (void**)&destPtr);
-	TEST_ASSERT(ptr==&data1);
+	TEST_ASSERT(destPtr==&data1);
 	queue_dequeue(q, (void**)&destPtr);
-	TEST_ASSERT(ptr==&data3);
+	TEST_ASSERT(destPtr==&data3);
 	queue_destroy(q);
 }
 
@@ -91,11 +95,11 @@ void test_queue_iterate(void){
 	TEST_ASSERT(queue_length(q)==3);
 	queue_iterate(q, iterator_inc);
 	queue_dequeue(q, (void**)&destPtr);
-	TEST_ASSERT(**destPtr==2);
+	TEST_ASSERT(*destPtr==2);
 	queue_dequeue(q, (void**)&destPtr);
-	TEST_ASSERT(**destPtr==-1);
+	TEST_ASSERT(*destPtr==0);
 	queue_dequeue(q, (void**)&destPtr);
-	TEST_ASSERT(**destPtr==4);
+	TEST_ASSERT(*destPtr==4);
 	queue_destroy(q);
 }
 int main(void)

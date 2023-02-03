@@ -1,6 +1,6 @@
 # Target programs
 programs := \
-	queue_tester_example.x \
+	queue_tester.x \
 	uthread_hello.x \
 	uthread_yield.x
 
@@ -42,7 +42,7 @@ CFLAGS 	+= -I$(UTHREADPATH)
 CFLAGS	+= -MMD
 
 # Linker options
-LDFLAGS := -L$(UTHREADPATH) -luthread
+LDFLAGS := -L$(UTHREADPATH) -libuthread
 
 # Application objects to compile
 objs := $(patsubst %.x,%.o,$(programs))
