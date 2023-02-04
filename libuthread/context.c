@@ -39,7 +39,7 @@ static void uthread_ctx_bootstrap(uthread_func_t func, void *arg)
 	/*
 	 * Enable interrupts right after being elected to run for the first time
 	 */
-	preempt_enable();
+	//preempt_enable();
 
 	/* Execute thread and when done, exit */
 	func(arg);
@@ -60,7 +60,6 @@ int uthread_ctx_init(uthread_ctx_t *uctx, void *top_of_stack,
 	 */
 	uctx->uc_stack.ss_sp = top_of_stack;
 	uctx->uc_stack.ss_size = UTHREAD_STACK_SIZE;
-
 	/*
 	 * Finish setting up context @uctx:
 	 * - the context will jump to function uthread_ctx_bootstrap() when
