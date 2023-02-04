@@ -10,9 +10,16 @@
 #include "uthread.h"
 #include "queue.h"
 
+enum{
+	READY,
+	RUNNING,
+	BLOCKED
+};
+
 queue_t threadQueue;
 uthread_ctx_t* loopContext;
 struct uthread_tcb* currentThread;
+
 
 struct uthread_tcb {
 	/* TODO Phase 2 */
@@ -31,8 +38,10 @@ void uthread_yield(void)
 {
 	/* TODO Phase 2 */
 	uthread_ctx_t* currentContext = currentThread->context;
+	currentThread->state=READY;
 	queue_enqueue(threadQueue, currentThread);
 	queue_dequeue(threadQueue, (void**)&currentThread);
+	currentThread->state=RUNNING;
 	uthread_ctx_switch(currentContext, currentThread->context);
 }
 
@@ -48,6 +57,7 @@ int uthread_create(uthread_func_t func, void *arg)
 	struct uthread_tcb* newThread= malloc(sizeof(struct uthread_tcb));
 	newThread->context = malloc(sizeof(uthread_ctx_t));
 	newThread->stackPtr = uthread_ctx_alloc_stack();
+	newThread->state=READY;
 	if(uthread_ctx_init(newThread->context, newThread->stackPtr, func, arg)){
 		return -1;
 	}
@@ -72,6 +82,7 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 		if(queue_dequeue(threadQueue, (void**)&currentThread)){
 			return -1;
 		}
+		currentThread->state=RUNNING;
 		uthread_ctx_switch(loopContext, currentThread->context);
 		free(currentThread->context);
 		uthread_ctx_destroy_stack(currentThread->stackPtr);
