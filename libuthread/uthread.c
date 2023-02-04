@@ -12,6 +12,7 @@
 
 queue_t threadQueue;
 uthread_ctx_t* loopContext;
+struct uthread_tcb* currentThread;
 
 struct uthread_tcb {
 	/* TODO Phase 2 */
@@ -20,20 +21,24 @@ struct uthread_tcb {
 	int state;
 };
 
-//struct uthread_tcb *uthread_current(void)
-//{
+struct uthread_tcb *uthread_current(void)
+{
 	/* TODO Phase 2/3 */
-//}
+	return currentThread;
+}
 
 void uthread_yield(void)
 {
 	/* TODO Phase 2 */
+	uthread_ctx_t* currentContext = currentThread->context;
+	queue_enqueue(threadQueue, currentThread);
+	queue_dequeue(threadQueue, (void**)&currentThread);
+	uthread_ctx_switch(currentContext, currentThread->context);
 }
 
 void uthread_exit(void)
 {
 	/* TODO Phase 2 */
-	printf("Exit\n");
 	setcontext(loopContext);
 }
 
@@ -63,15 +68,14 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 	if(uthread_create(func, arg)){
 		return -1;
 	}
-	struct uthread_tcb* activeThread;
 	while(queue_length(threadQueue)!=0){
-		if(queue_dequeue(threadQueue, (void**)&activeThread)){
+		if(queue_dequeue(threadQueue, (void**)&currentThread)){
 			return -1;
 		}
-		uthread_ctx_switch(loopContext, activeThread->context);
-		free(activeThread->context);
-		uthread_ctx_destroy_stack(activeThread->stackPtr);
-		free(activeThread);
+		uthread_ctx_switch(loopContext, currentThread->context);
+		free(currentThread->context);
+		uthread_ctx_destroy_stack(currentThread->stackPtr);
+		free(currentThread);
 	}
 	free(loopContext);
 	queue_destroy(threadQueue);
