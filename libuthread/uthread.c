@@ -17,6 +17,9 @@ enum{
 };
 
 queue_t threadQueue;
+
+queue_t blockedQueue;
+
 uthread_ctx_t* loopContext;
 struct uthread_tcb* currentThread;
 
@@ -95,11 +98,20 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 
 void uthread_block(void)
 {
-	/* TODO Phase 3 */
+	// add the current thread to the blocked queue
+	uthread_ctx_t* currentContext = currentThread->context;
+	currentThread->state = BLOCKED;
+	queue_enqueue(blockedQueue, currentThread);
+	// take the next thread to run and run it
+	queue_dequeue(threadQueue, (void**)&currentThread);
+	currentThread->state=RUNNING;
+	uthread_ctx_switch(currentContext, currentThread->context);
 }
 
-//void uthread_unblock(struct uthread_tcb *uthread)
-//{
-	/* TODO Phase 3 */
-//}
+void uthread_unblock(struct uthread_tcb *uthread)
+{
+	queue_delete(blockedQueue, uthread);
+	uthread->state = READY;
+	queue_enqueue(threadQueue, uthread);
+}
 

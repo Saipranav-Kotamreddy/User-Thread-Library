@@ -1,6 +1,6 @@
 # Target library
 lib := libuthread.a
-objs := queue.o uthread.o context.o
+objs := queue.o uthread.o context.o sem.o
 CC := gcc 
 CFLAGS := -Wall -Wextra -Werror -MMD
 
@@ -28,6 +28,11 @@ context.o: context.c private.h
 queue.o: queue.c queue.h
 	@echo "Generating object files ..."
 	$(Q)$(CC) $(CFLAGS) -c -o $(@) $(<)
+
+sem.o: sem.c sem.h
+	@echo "Generating object files ..."
+	$(Q)$(CC) -pthread $(CFLAGS) -c -o $(@) $(<)
+
 clean:
 	@echo "Cleaning all .a, .o, and .d files ..."
 	$(Q)rm -f $(lib) $(objs) $(deps)
