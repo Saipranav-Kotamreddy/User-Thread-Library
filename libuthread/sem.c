@@ -8,6 +8,9 @@
 
 #include <pthread.h>
 
+#define ERR -1
+#define OK 0
+
 struct semaphore {
 	size_t curr_count;
 	queue_t waiting_queue;
@@ -25,17 +28,19 @@ sem_t sem_create(size_t count)
 
 int sem_destroy(sem_t sem)
 {
+	if (sem == NULL || queue_length(sem->waiting_queue) != 0) {
+		return ERR;
+	}
 	queue_destroy(sem->waiting_queue);
 	free(sem);
-	return 0;
+	return OK;
 }
 
 int sem_down(sem_t sem)
 {
 	if (sem == NULL) {
-		return 0;
+		return ERR;
 	}
-
 	pthread_spin_lock(&(sem->lock));
 	if (sem->curr_count > 0) {
 		sem->curr_count -= 1;
@@ -45,15 +50,14 @@ int sem_down(sem_t sem)
 		pthread_spin_unlock(&(sem->lock));
 		uthread_block();
 	}
-	return 1;
+	return OK;
 }
 
 int sem_up(sem_t sem)
 {
 	if (sem == NULL) {
-		return 0;
+		return ERR;
 	}
-
 	pthread_spin_lock(&(sem->lock));
 	if (queue_length(sem->waiting_queue) == 0) {
 		sem->curr_count++;
@@ -63,6 +67,6 @@ int sem_up(sem_t sem)
 		uthread_unblock(new_thread);
 	}
 	pthread_spin_unlock(&(sem->lock));
-	return 1;
+	return OK;
 }
 

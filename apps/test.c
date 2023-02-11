@@ -36,6 +36,44 @@ int main(void)
 }
 */
 
+// #include <stdbool.h>
+// #include <stdio.h>
+// #include <stdlib.h>
+
+// #include <sem.h>
+// #include <uthread.h>
+// #include <private.h>
+// #include <pthread.h>
+
+// sem_t sem;
+// void thread2(void *arg)
+// {
+// 	(void)arg;
+
+//     printf("thread 2 - 1\n");
+//     sem_up(sem);
+//     printf("thread 2 - done\n");
+// }
+
+// void thread1(void *arg)
+// {
+// 	(void)arg;
+
+//     printf("thread 1 - 1\n");
+// 	uthread_create(thread2, NULL);
+//     printf("thread 1 - 2\n");
+// 	sem_down(sem);
+//     printf("thread 1 - 3\n");
+// }
+
+// int main(void)
+// {
+// 	sem = sem_create(0);
+//     uthread_run(false, thread1, NULL);
+//     sem_destroy(sem);
+// 	return 0;
+// }
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,30 +84,15 @@ int main(void)
 #include <pthread.h>
 
 sem_t sem;
-void thread2(void *arg)
-{
-	(void)arg;
-
-    printf("thread 2 - 1\n");
-    sem_up(sem);
-    printf("thread 2 - done\n");
-}
-
-void thread1(void *arg)
-{
-	(void)arg;
-
-    printf("thread 1 - 1\n");
-	uthread_create(thread2, NULL);
-    printf("thread 1 - 2\n");
-	sem_down(sem);
-    printf("thread 1 - 3\n");
-}
 
 int main(void)
 {
-	sem = sem_create(0);
-    uthread_run(false, thread1, NULL);
-    sem_destroy(sem);
+    int ret1 = sem_up(NULL);
+    int ret2 = sem_down(NULL);
+    printf("Returned: %d %d\n", ret1, ret2);
+    sem = sem_create(0);
+    ret1 = sem_up(sem);
+    ret2 = sem_down(sem);
+    printf("Returned: %d %d\n", ret1, ret2);
 	return 0;
 }

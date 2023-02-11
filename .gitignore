@@ -9,4 +9,3 @@ apps/*.d
 apps/*.o
 apps/*.x
 libuthread/*gch
-testing

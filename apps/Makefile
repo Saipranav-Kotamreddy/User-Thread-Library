@@ -8,7 +8,10 @@ programs := \
 	sem_count.x \
 	sem_buffer.x \
 	sem_prime.x \
-	edge_test.x
+	edge_test.x \
+	err_test.x \
+	err_test2.x \
+	test.x
 
 # User-level thread library
 UTHREADLIB := libuthread
