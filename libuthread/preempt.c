@@ -17,19 +17,22 @@
 
 struct sigaction old_action;
 struct itimerval prev_timer_interval;
-sigset_t ss;
+sigset_t signals_to_block;
+sigset_t old_signals;
 
 void preempt_disable(void)
 {
 	/* TODO Phase 4 */
+	sigprocmask(SIG_BLOCK, &signals_to_block, NULL);
 }
 
 void preempt_enable(void)
 {
-	/* TODO Phase 4 */
+	sigprocmask(SIG_UNBLOCK, &signals_to_block, NULL);
 }
 
 void handle_alarm () {
+	//printf("Handle alarm called!\n");
 	uthread_yield();
 }
 
@@ -55,6 +58,10 @@ void preempt_start(bool preempt)
 	if (ret) {
 		printf("Error!\n");
 	}
+
+	sigemptyset(&signals_to_block);
+	sigaddset(&signals_to_block, SIGVTALRM);
+	sigprocmask(SIG_BLOCK, NULL, &old_signals);
 }
 
 void preempt_stop(void)

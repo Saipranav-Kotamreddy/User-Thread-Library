@@ -11,6 +11,8 @@ programs := \
 	edge_test.x \
 	err_test.x \
 	err_test2.x \
+	test_preempt.x \
+	test_preempt_complex.x \
 	test.x
 
 # User-level thread library
