@@ -1,78 +1,82 @@
 /*
-    Testing block, unblock:
-
+tests the signal handler directly
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <sem.h>
 #include <uthread.h>
 #include <private.h>
+#include <pthread.h>
 
-struct uthread_tcb* threadBlocked;
+#include <signal.h>
 
-void thread2(void *arg) {
-    (void)arg;
-    printf("Thread 2 is running and done!\n");
-    uthread_unblock(threadBlocked);
+void thread2(void *arg)
+{
+	(void)arg;
+
+	printf("thread2\n");
 }
 
 void thread1(void *arg)
 {
 	(void)arg;
 
-    uthread_create(thread2, NULL);
-
-	printf("Hello world!\n");
-    threadBlocked = uthread_current();
-    uthread_block();
-    printf("Thread 1 is done!\n");
+    printf("thread1 - 1\n");
+	uthread_create(thread2, NULL);
+    printf("thread1 - 2\n");
+    raise(SIGVTALRM);
+    printf("thread1 - 3\n");
 }
 
 int main(void)
 {
-	uthread_run(false, thread1, NULL);
+	uthread_run(true, thread1, NULL);
+	return 0;
+}*/
 
+/*
+    exp output: thread 1 - 1, thread 1 - 2, thread 2 - 1 (then stops)
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <sem.h>
+#include <uthread.h>
+#include <private.h>
+#include <pthread.h>
+
+#include <signal.h>
+#include <unistd.h>
+
+bool somevalue = true;
+
+void thread2(void *arg)
+{
+	(void)arg;
+
+	printf("thread2 - 1\n");
+    exit(0);
+}
+
+void thread1(void *arg)
+{
+	(void)arg;
+
+    printf("thread1 - 1\n");
+	uthread_create(thread2, NULL);
+    printf("thread1 - 2\n");
+    while(1) { }
+    printf("thread1 - 3\n");
+}
+
+int main(void)
+{
+	uthread_run(true, thread1, NULL);
 	return 0;
 }
+
 */
-
-// #include <stdbool.h>
-// #include <stdio.h>
-// #include <stdlib.h>
-
-// #include <sem.h>
-// #include <uthread.h>
-// #include <private.h>
-// #include <pthread.h>
-
-// sem_t sem;
-// void thread2(void *arg)
-// {
-// 	(void)arg;
-
-//     printf("thread 2 - 1\n");
-//     sem_up(sem);
-//     printf("thread 2 - done\n");
-// }
-
-// void thread1(void *arg)
-// {
-// 	(void)arg;
-
-//     printf("thread 1 - 1\n");
-// 	uthread_create(thread2, NULL);
-//     printf("thread 1 - 2\n");
-// 	sem_down(sem);
-//     printf("thread 1 - 3\n");
-// }
-
-// int main(void)
-// {
-// 	sem = sem_create(0);
-//     uthread_run(false, thread1, NULL);
-//     sem_destroy(sem);
-// 	return 0;
-// }
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -83,16 +87,33 @@ int main(void)
 #include <private.h>
 #include <pthread.h>
 
-sem_t sem;
+#include <signal.h>
+#include <unistd.h>
+
+bool somevalue = true;
+
+void thread2(void *arg)
+{
+	(void)arg;
+
+	printf("thread2 - 1\n");
+    exit(0);
+}
+
+void thread1(void *arg)
+{
+	(void)arg;
+
+    printf("thread1 - 1\n");
+	uthread_create(thread2, NULL);
+    printf("thread1 - 2\n");
+    preempt_disable();
+    while(1) { }
+    printf("thread1 - 3\n");
+}
 
 int main(void)
 {
-    int ret1 = sem_up(NULL);
-    int ret2 = sem_down(NULL);
-    printf("Returned: %d %d\n", ret1, ret2);
-    sem = sem_create(0);
-    ret1 = sem_up(sem);
-    ret2 = sem_down(sem);
-    printf("Returned: %d %d\n", ret1, ret2);
+	uthread_run(true, thread1, NULL);
 	return 0;
 }

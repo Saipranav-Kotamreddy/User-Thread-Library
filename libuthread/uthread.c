@@ -72,9 +72,7 @@ int uthread_create(uthread_func_t func, void *arg)
 
 int uthread_run(bool preempt, uthread_func_t func, void *arg)
 {
-	if(preempt){
-		return -1;
-	}
+	preempt_start(preempt);
 	/* TODO Phase 2 */
 	threadQueue = queue_create();
 	loopContext = malloc(sizeof(uthread_ctx_t));
@@ -85,6 +83,7 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 		if(queue_dequeue(threadQueue, (void**)&currentThread)){
 			return -1;
 		}
+		// reset timer
 		currentThread->state=RUNNING;
 		uthread_ctx_switch(loopContext, currentThread->context);
 		free(currentThread->context);
@@ -93,6 +92,9 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 	}
 	free(loopContext);
 	queue_destroy(threadQueue);
+	if (preempt) {
+		preempt_stop();
+	}
 	return 0;
 }
 
