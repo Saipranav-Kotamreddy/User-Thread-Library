@@ -12,7 +12,6 @@
 struct semaphore {
 	size_t curr_count;
 	queue_t waiting_queue;
-	pthread_spinlock_t lock;
 };
 
 sem_t sem_create(size_t count)
@@ -20,7 +19,6 @@ sem_t sem_create(size_t count)
 	sem_t sem = malloc(sizeof(struct semaphore));
 	sem->curr_count = count;
 	sem->waiting_queue = queue_create();
-	pthread_spin_init(&(sem->lock), PTHREAD_PROCESS_PRIVATE); 
 	return sem;
 }
 
@@ -36,12 +34,11 @@ int sem_destroy(sem_t sem)
 
 void give_resource(sem_t sem) {
 	sem->curr_count -= 1;
-	pthread_spin_unlock(&(sem->lock));
+	preempt_enable();
 }
 
 void add_to_waiting_queue(sem_t sem) {
 	queue_enqueue(sem->waiting_queue, uthread_current());
-	pthread_spin_unlock(&(sem->lock));
 	uthread_block();	
 }
 
@@ -50,7 +47,7 @@ int sem_down(sem_t sem)
 	if (sem == NULL) {
 		return ERR;
 	}
-	pthread_spin_lock(&(sem->lock));
+	preempt_disable();
 	if (sem->curr_count > 0) {
 		give_resource(sem);
 	} else {
@@ -70,13 +67,13 @@ int sem_up(sem_t sem)
 	if (sem == NULL) {
 		return ERR;
 	}
-	pthread_spin_lock(&(sem->lock));
+	preempt_disable();
 	if (queue_length(sem->waiting_queue) == 0) {
 		sem->curr_count++;
 	} else {
 		unblock_waiting_thread(sem);
 	}
-	pthread_spin_unlock(&(sem->lock));
+	preempt_enable();
 	return OK;
 }
 

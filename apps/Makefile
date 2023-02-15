@@ -8,6 +8,10 @@ programs := \
 	sem_count.x \
 	sem_buffer.x \
 	sem_prime.x \
+	sem_simple_preempt.x \
+	sem_count_preempt.x \
+	sem_buffer_preempt.x \
+	sem_prime_preempt.x \
 	edge_test.x \
 	err_test.x \
 	err_test2.x \

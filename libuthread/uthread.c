@@ -109,6 +109,7 @@ void uthread_block(void)
 	// take the next thread to run and run it
 	queue_dequeue(threadQueue, (void**)&currentThread);
 	currentThread->state=RUNNING;
+	preempt_enable();
 	uthread_ctx_switch(currentContext, currentThread->context);
 }
 

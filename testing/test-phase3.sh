@@ -1,5 +1,27 @@
-test_files=( "./sem_simple.x" "./edge_test.x" "./sem_prime.x" "./sem_buffer.x" "./err_test.x" "./err_test2.x")
-exp_output=( "exp_sem_simple.txt" "exp_sem_edge.txt" "exp_sem_prime.txt" "exp_sem_buffer.txt" "exp_sem_err.txt" "exp_sem_err2.txt")
+test_files=( 
+    "./sem_simple.x" 
+    "./sem_simple_preempt.x"
+    "./edge_test.x" 
+    "./sem_prime.x" 
+    "./sem_buffer.x" 
+    "./sem_buffer_preempt.x"
+    "./err_test.x" 
+    "./err_test2.x"
+    "./sem_count.x"
+    "./sem_count_preempt.x"
+)
+exp_output=( 
+    "exp_sem_simple.txt"
+    "exp_sem_simple.txt"
+    "exp_sem_edge.txt" 
+    "exp_sem_prime.txt" 
+    "exp_sem_buffer.txt" 
+    "exp_sem_buffer.txt" 
+    "exp_sem_err.txt" 
+    "exp_sem_err2.txt"
+    "exp_sem_count.txt"
+    "exp_sem_count.txt"  
+)
 
 cd ../libuthread 
 make > /dev/null
