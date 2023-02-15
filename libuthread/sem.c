@@ -1,12 +1,10 @@
 #include <stddef.h>
 #include <stdlib.h>
-// remove stdio import later:
-#include <stdio.h>
+#include <pthread.h>
+
 #include "queue.h"
 #include "sem.h"
 #include "private.h"
-
-#include <pthread.h>
 
 #define ERR -1
 #define OK 0
@@ -22,7 +20,7 @@ sem_t sem_create(size_t count)
 	sem_t sem = malloc(sizeof(struct semaphore));
 	sem->curr_count = count;
 	sem->waiting_queue = queue_create();
-	pthread_spin_init(&(sem->lock), 1); 
+	pthread_spin_init(&(sem->lock), PTHREAD_PROCESS_PRIVATE); 
 	return sem;
 }
 
@@ -36,6 +34,17 @@ int sem_destroy(sem_t sem)
 	return OK;
 }
 
+void give_resource(sem_t sem) {
+	sem->curr_count -= 1;
+	pthread_spin_unlock(&(sem->lock));
+}
+
+void add_to_waiting_queue(sem_t sem) {
+	queue_enqueue(sem->waiting_queue, uthread_current());
+	pthread_spin_unlock(&(sem->lock));
+	uthread_block();	
+}
+
 int sem_down(sem_t sem)
 {
 	if (sem == NULL) {
@@ -43,14 +52,17 @@ int sem_down(sem_t sem)
 	}
 	pthread_spin_lock(&(sem->lock));
 	if (sem->curr_count > 0) {
-		sem->curr_count -= 1;
-		pthread_spin_unlock(&(sem->lock));
+		give_resource(sem);
 	} else {
-		queue_enqueue(sem->waiting_queue, uthread_current());
-		pthread_spin_unlock(&(sem->lock));
-		uthread_block();
-	}
+		add_to_waiting_queue(sem);
+	} 
 	return OK;
+}
+
+void unblock_waiting_thread(sem_t sem) {
+	struct uthread_tcb* new_thread;
+	queue_dequeue(sem->waiting_queue, (void**)&new_thread);
+	uthread_unblock(new_thread);
 }
 
 int sem_up(sem_t sem)
@@ -62,9 +74,7 @@ int sem_up(sem_t sem)
 	if (queue_length(sem->waiting_queue) == 0) {
 		sem->curr_count++;
 	} else {
-		struct uthread_tcb* new_thread;
-		queue_dequeue(sem->waiting_queue, (void**)&new_thread);
-		uthread_unblock(new_thread);
+		unblock_waiting_thread(sem);
 	}
 	pthread_spin_unlock(&(sem->lock));
 	return OK;

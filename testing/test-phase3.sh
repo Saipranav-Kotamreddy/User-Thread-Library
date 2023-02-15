@@ -2,9 +2,9 @@ test_files=( "./sem_simple.x" "./edge_test.x" "./sem_prime.x" "./sem_buffer.x" "
 exp_output=( "exp_sem_simple.txt" "exp_sem_edge.txt" "exp_sem_prime.txt" "exp_sem_buffer.txt" "exp_sem_err.txt" "exp_sem_err2.txt")
 
 cd ../libuthread 
-make &> /dev/null
+make > /dev/null
 cd ../apps
-make &> /dev/null
+make > /dev/null
 for ((i = 0; i < ${#test_files[@]}; i++)); do
     test_file="${test_files[$i]}"
     exp_output="${exp_output[$i]}"

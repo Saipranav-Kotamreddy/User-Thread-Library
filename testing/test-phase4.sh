@@ -2,9 +2,9 @@ test_files=( "./test_preempt.x" "./test_preempt_complex.x" "./err_test3.x" "./er
 exp_output=( "exp_test_preempt.txt" "exp_test_preempt_complex.txt" "exp_test_err_test3.txt" "exp_test_err_test4.txt" "exp_test_preempt2.txt" )
 
 cd ../libuthread 
-make &> /dev/null
+make > /dev/null
 cd ../apps
-make &> /dev/null
+make > /dev/null
 for ((i = 0; i < ${#test_files[@]}; i++)); do
     test_file="${test_files[$i]}"
     exp_output="${exp_output[$i]}"
