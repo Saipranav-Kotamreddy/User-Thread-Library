@@ -19,16 +19,19 @@ struct sigaction old_action;
 struct itimerval prev_timer_interval;
 sigset_t signals_to_block;
 sigset_t old_signals;
+bool premption_requested = false;
 
 void preempt_disable(void)
 {
 	/* TODO Phase 4 */
-	sigprocmask(SIG_BLOCK, &signals_to_block, NULL);
+	if (premption_requested)
+		sigprocmask(SIG_BLOCK, &signals_to_block, NULL);
 }
 
 void preempt_enable(void)
 {
-	sigprocmask(SIG_UNBLOCK, &signals_to_block, NULL);
+	if (premption_requested)
+		sigprocmask(SIG_UNBLOCK, &signals_to_block, NULL);
 }
 
 void handle_alarm () {
@@ -42,6 +45,8 @@ void preempt_start(bool preempt)
 	if (!preempt) {
 		return;
 	}
+
+	premption_requested = true;
 	
 	struct sigaction preempt_action;
 	preempt_action.sa_handler = handle_alarm;
@@ -66,8 +71,9 @@ void preempt_start(bool preempt)
 
 void preempt_stop(void)
 {
-	// Todo: handle case where preempt = false
-	sigaction(SIGVTALRM, &old_action, NULL);
-	setitimer(ITIMER_VIRTUAL, &prev_timer_interval, NULL);
+	if (premption_requested) {
+		sigaction(SIGVTALRM, &old_action, NULL);
+		setitimer(ITIMER_VIRTUAL, &prev_timer_interval, NULL);
+	}
 }
 

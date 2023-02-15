@@ -11,7 +11,10 @@ programs := \
 	edge_test.x \
 	err_test.x \
 	err_test2.x \
+	err_test3.x \
+	err_test4.x \
 	test_preempt.x \
+	test_preempt2.x \
 	test_preempt_complex.x \
 	test.x
 

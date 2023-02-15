@@ -1,3 +1,4 @@
+/* This program is very simple and shows that no thread can hog the CPU when preemption is enabled */
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,7 +15,7 @@
 void thread2(void *arg)
 {
 	(void)arg;
-	printf("thread2 - 1\n");
+	printf("Thread2 - 1\n");
     exit(1);
 }
 

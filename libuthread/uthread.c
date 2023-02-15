@@ -40,11 +40,13 @@ struct uthread_tcb *uthread_current(void)
 void uthread_yield(void)
 {
 	/* TODO Phase 2 */
+	preempt_disable();
 	uthread_ctx_t* currentContext = currentThread->context;
 	currentThread->state=READY;
 	queue_enqueue(threadQueue, currentThread);
 	queue_dequeue(threadQueue, (void**)&currentThread);
 	currentThread->state=RUNNING;
+	preempt_enable();
 	uthread_ctx_switch(currentContext, currentThread->context);
 }
 

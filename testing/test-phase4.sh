@@ -1,5 +1,5 @@
-test_files=( "./test_preempt.x" "./test_preempt_complex.x" )
-exp_output=( "exp_test_preempt.txt" "exp_test_preempt_complex.txt" )
+test_files=( "./test_preempt.x" "./test_preempt_complex.x" "./err_test3.x" "./err_test4.x" "./test_preempt2.x")
+exp_output=( "exp_test_preempt.txt" "exp_test_preempt_complex.txt" "exp_test_err_test3.txt" "exp_test_err_test4.txt" "exp_test_preempt2.txt" )
 
 cd ../libuthread 
 make &> /dev/null
