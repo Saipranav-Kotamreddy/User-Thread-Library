@@ -1,22 +1,15 @@
 #include <signal.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/time.h>
 
 #include "private.h"
 #include "uthread.h"
 
-/*
- * Frequency of preemption
- * 100Hz is 100 times per second
- */
-#define HZ 100
-#define NUM_MICROSECONDS_IN_SECOND 1000000
 #define TIME_INTERVAL_SECONDS 0
 #define NO_FLAGS 0
+#define HZ 100
+#define NUM_MICROSECONDS_IN_SECOND 1000000
 const int TIME_INTERVAL_MICROSECONDS = NUM_MICROSECONDS_IN_SECOND / HZ;
 
 struct sigaction old_action;
@@ -27,14 +20,18 @@ bool premption_requested = false;
 
 void preempt_disable(void)
 {
-	if (premption_requested)
-		sigprocmask(SIG_BLOCK, &signals_to_block, NULL);
+	if (!premption_requested) {
+		return;
+	}
+	sigprocmask(SIG_BLOCK, &signals_to_block, NULL);
 }
 
 void preempt_enable(void)
 {
-	if (premption_requested)
-		sigprocmask(SIG_UNBLOCK, &signals_to_block, NULL);
+	if (!premption_requested) {
+		return;
+	}
+	sigprocmask(SIG_UNBLOCK, &signals_to_block, NULL);
 }
 
 void handle_alarm () {
@@ -77,9 +74,10 @@ void preempt_start(bool preempt)
 
 void preempt_stop(void)
 {
-	if (premption_requested) {
-		sigaction(SIGVTALRM, &old_action, NULL);
-		setitimer(ITIMER_VIRTUAL, &prev_timer_interval, NULL);
+	if (!premption_requested) {
+		return;
 	}
+	sigaction(SIGVTALRM, &old_action, NULL);
+	setitimer(ITIMER_VIRTUAL, &prev_timer_interval, NULL);
 }
 
