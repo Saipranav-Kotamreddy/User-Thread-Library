@@ -39,6 +39,7 @@ void give_resource(sem_t sem) {
 
 void add_to_waiting_queue(sem_t sem) {
 	queue_enqueue(sem->waiting_queue, uthread_current());
+	preempt_enable();
 	uthread_block();	
 }
 

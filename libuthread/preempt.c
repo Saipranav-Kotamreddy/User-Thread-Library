@@ -68,8 +68,8 @@ void preempt_start(bool preempt)
 	}
 	premption_requested = true;
 	setup_timer();
-	setup_alarm_handler();
 	setup_signals_to_block();
+	setup_alarm_handler();
 }
 
 void preempt_stop(void)

@@ -59,39 +59,48 @@ void uthread_exit(void)
 int uthread_create(uthread_func_t func, void *arg)
 {
 	/* TODO Phase 2 */
+	preempt_disable();
 	struct uthread_tcb* newThread= malloc(sizeof(struct uthread_tcb));
 	newThread->context = malloc(sizeof(uthread_ctx_t));
 	newThread->stackPtr = uthread_ctx_alloc_stack();
 	newThread->state=READY;
 	if(uthread_ctx_init(newThread->context, newThread->stackPtr, func, arg)){
+		preempt_enable();
 		return -1;
 	}
 	if(queue_enqueue(threadQueue, newThread)){
+		preempt_enable();
 		return -1;
 	}
+	preempt_enable();
 	return 0;
 }
 
 int uthread_run(bool preempt, uthread_func_t func, void *arg)
 {
-	preempt_start(preempt);
 	/* TODO Phase 2 */
 	threadQueue = queue_create();
 	loopContext = malloc(sizeof(uthread_ctx_t));
 	if(uthread_create(func, arg)){
 		return -1;
 	}
+	preempt_start(preempt);
 	while(queue_length(threadQueue)!=0){
+		preempt_disable();
 		if(queue_dequeue(threadQueue, (void**)&currentThread)){
 			return -1;
 		}
 		// reset timer
 		currentThread->state=RUNNING;
+		preempt_enable();
 		uthread_ctx_switch(loopContext, currentThread->context);
+		preempt_disable();
 		free(currentThread->context);
 		uthread_ctx_destroy_stack(currentThread->stackPtr);
 		free(currentThread);
+		preempt_enable();
 	}
+	preempt_disable();
 	free(loopContext);
 	queue_destroy(threadQueue);
 	if (preempt) {
@@ -102,6 +111,7 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 
 void uthread_block(void)
 {
+	preempt_disable();
 	// add the current thread to the blocked queue
 	uthread_ctx_t* currentContext = currentThread->context;
 	currentThread->state = BLOCKED;
