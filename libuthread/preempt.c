@@ -38,7 +38,7 @@ void handle_alarm () {
 	uthread_yield();
 }
 
-void setup_timer() {
+void setup_alarm_handler() {
 	struct sigaction preempt_action;
 	preempt_action.sa_handler = handle_alarm;
 	sigemptyset(&preempt_action.sa_mask);
@@ -46,7 +46,7 @@ void setup_timer() {
 	sigaction(SIGVTALRM, &preempt_action, &old_action);
 }
 
-void setup_alarm_handler() {
+void setup_timer() {
 	struct itimerval new_timer_interval;
 	new_timer_interval.it_interval.tv_sec = TIME_INTERVAL_SECONDS;
 	new_timer_interval.it_interval.tv_usec = TIME_INTERVAL_MICROSECONDS;
