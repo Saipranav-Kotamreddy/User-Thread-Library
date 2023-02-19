@@ -1,15 +1,14 @@
 # Target library
 lib := libuthread.a
-objs := queue.o
+objs := queue.o uthread.o context.o sem.o preempt.o
 CC := gcc 
-CFLAGS := -Wall -Wextra -Werror -MMD
+CFLAGS := -Wall -Wextra -Werror -MMD -c -o
 
 ifneq ($(V), 1)
-	Q = @
+Q = @
 endif
 
 all: $(lib)
-# Used Makefile Discussion notes for the below
 deps := $(patsubst %.o,%.d,$(objs))
 -include $(deps)
 
@@ -17,9 +16,9 @@ $(lib): $(objs)
 	@echo "Generating static library ..."
 	$(Q)ar rcs $(@) $(^)
 
-queue.o: queue.c queue.h
-	@echo "Generating object files ..."
-	$(Q)$(CC) $(CFLAGS) -c -o $(@) $(<)
+%.o: %.c
+	@echo "Generating $@ ..."
+	$(Q)$(CC) $(CFLAGS) $(@) $(<)
 
 clean:
 	@echo "Cleaning all .a, .o, and .d files ..."

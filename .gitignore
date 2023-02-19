@@ -2,3 +2,11 @@ libuthread/*.swp
 libuthread/*.o
 libuthread/*.a
 libuthread/*.d
+
+apps/testing.sh
+.vscode
+apps/*.d
+apps/*.o
+apps/*.x
+apps/Makefile
+libuthread/*gch
