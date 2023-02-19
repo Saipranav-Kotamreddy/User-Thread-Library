@@ -8,5 +8,7 @@ apps/testing.sh
 apps/*.d
 apps/*.o
 apps/*.x
+apps/*.c
 apps/Makefile
 libuthread/*gch
+testing
