@@ -1,11 +1,4 @@
-#include <assert.h>
-#include <signal.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <sys/time.h>
-
 #include "private.h"
 #include "uthread.h"
 #include "queue.h"
@@ -15,118 +8,148 @@ enum{
 	RUNNING,
 	BLOCKED
 };
-
-queue_t threadQueue;
-
-queue_t blockedQueue;
-
-uthread_ctx_t* loopContext;
-struct uthread_tcb* currentThread;
-
-
+enum {
+	SUCCESS,
+	ERR
+};
 struct uthread_tcb {
-	/* TODO Phase 2 */
 	uthread_ctx_t* context;
-	void* stackPtr;
+	void* stack_ptr;
 	int state;
 };
 
+queue_t thread_queue;
+queue_t blocked_queue;
+uthread_ctx_t* loop_context;
+struct uthread_tcb* current_thread;
+
 struct uthread_tcb *uthread_current(void)
 {
-	/* TODO Phase 2/3 */
-	return currentThread;
+	return current_thread;
 }
 
 void uthread_yield(void)
 {
-	/* TODO Phase 2 */
+	/* Add thread to the back of the "ready" queue */
 	preempt_disable();
-	uthread_ctx_t* currentContext = currentThread->context;
-	currentThread->state=READY;
-	queue_enqueue(threadQueue, currentThread);
-	queue_dequeue(threadQueue, (void**)&currentThread);
-	currentThread->state=RUNNING;
+	uthread_ctx_t* current_context = current_thread->context;
+	current_thread->state = READY;
+	queue_enqueue(thread_queue, current_thread);
+
+	/* Run the thread at the front of the "ready" queue */
+	queue_dequeue(thread_queue, (void**) &current_thread);
+	current_thread->state = RUNNING;
 	preempt_enable();
-	uthread_ctx_switch(currentContext, currentThread->context);
+	uthread_ctx_switch(current_context, current_thread->context);
 }
 
 void uthread_exit(void)
 {
-	/* TODO Phase 2 */
-	setcontext(loopContext);
+	setcontext(loop_context);
 }
 
 int uthread_create(uthread_func_t func, void *arg)
 {
-	/* TODO Phase 2 */
 	preempt_disable();
-	struct uthread_tcb* newThread= malloc(sizeof(struct uthread_tcb));
-	newThread->context = malloc(sizeof(uthread_ctx_t));
-	newThread->stackPtr = uthread_ctx_alloc_stack();
-	newThread->state=READY;
-	if(uthread_ctx_init(newThread->context, newThread->stackPtr, func, arg)){
+
+	/* Create new thread */
+	struct uthread_tcb* new_thread = malloc(sizeof(struct uthread_tcb));
+	new_thread->context = malloc(sizeof(uthread_ctx_t));
+	new_thread->stack_ptr = uthread_ctx_alloc_stack();
+	new_thread->state=READY;
+
+	/* Initialize thread context and add it to queue */
+	if (uthread_ctx_init(new_thread->context, new_thread->stack_ptr, func, arg) != SUCCESS) {
 		preempt_enable();
-		return -1;
+		return ERR;
 	}
-	if(queue_enqueue(threadQueue, newThread)){
+	if (queue_enqueue(thread_queue, new_thread) != SUCCESS) {
 		preempt_enable();
-		return -1;
+		return ERR;
 	}
+
 	preempt_enable();
-	return 0;
+	return SUCCESS;
+}
+
+int initialize_main_thread(uthread_func_t func, void *arg) {
+	thread_queue = queue_create();
+	loop_context = malloc(sizeof(uthread_ctx_t));
+	if (uthread_create(func, arg) != SUCCESS) {
+		return ERR;
+	} else {
+		return SUCCESS;
+	}
+}
+
+int switch_to_next_available_thread() {
+	preempt_disable();
+	if (queue_dequeue(thread_queue, (void**) &current_thread) != SUCCESS) {
+		return ERR;
+	}
+	current_thread->state = RUNNING;
+	preempt_enable();
+	uthread_ctx_switch(loop_context, current_thread->context);
+	return SUCCESS;
+}
+
+void delete_current_thread() {
+	preempt_disable();
+	free(current_thread->context);
+	uthread_ctx_destroy_stack(current_thread->stack_ptr);
+	free(current_thread);
+	preempt_enable();
+}
+
+void deallocate_main_thread() {
+	preempt_disable();
+	free(loop_context);
+	queue_destroy(thread_queue);
+	preempt_stop();
 }
 
 int uthread_run(bool preempt, uthread_func_t func, void *arg)
 {
-	/* TODO Phase 2 */
-	threadQueue = queue_create();
-	loopContext = malloc(sizeof(uthread_ctx_t));
-	if(uthread_create(func, arg)){
-		return -1;
+	/* Initialize the thread queue and loop context */
+	int state = initialize_main_thread(func, arg);
+	if (state != SUCCESS) {
+		return ERR;
 	}
+
+	/* Run each available thread */
 	preempt_start(preempt);
-	while(queue_length(threadQueue)!=0){
-		preempt_disable();
-		if(queue_dequeue(threadQueue, (void**)&currentThread)){
-			return -1;
+	while (queue_length(thread_queue)!=SUCCESS) {
+		state = switch_to_next_available_thread();
+		if (state != SUCCESS) {
+			return ERR;
 		}
-		// reset timer
-		currentThread->state=RUNNING;
-		preempt_enable();
-		uthread_ctx_switch(loopContext, currentThread->context);
-		preempt_disable();
-		free(currentThread->context);
-		uthread_ctx_destroy_stack(currentThread->stackPtr);
-		free(currentThread);
-		preempt_enable();
+		delete_current_thread();
 	}
-	preempt_disable();
-	free(loopContext);
-	queue_destroy(threadQueue);
-	if (preempt) {
-		preempt_stop();
-	}
-	return 0;
+
+	/* deallocate the thread queue and loop context */
+	deallocate_main_thread();
+	return SUCCESS;
 }
 
 void uthread_block(void)
 {
+	/* add the current thread to the blocked queue */
 	preempt_disable();
-	// add the current thread to the blocked queue
-	uthread_ctx_t* currentContext = currentThread->context;
-	currentThread->state = BLOCKED;
-	queue_enqueue(blockedQueue, currentThread);
-	// take the next thread to run and run it
-	queue_dequeue(threadQueue, (void**)&currentThread);
-	currentThread->state=RUNNING;
+	uthread_ctx_t* current_context = current_thread->context;
+	current_thread->state = BLOCKED;
+	queue_enqueue(blocked_queue, current_thread);
+	
+	/* take the next thread to run and run it */
+	queue_dequeue(thread_queue, (void**) &current_thread);
+	current_thread->state = RUNNING;
 	preempt_enable();
-	uthread_ctx_switch(currentContext, currentThread->context);
+	uthread_ctx_switch(current_context, current_thread->context);
 }
 
 void uthread_unblock(struct uthread_tcb *uthread)
 {
-	queue_delete(blockedQueue, uthread);
+	queue_delete(blocked_queue, uthread);
 	uthread->state = READY;
-	queue_enqueue(threadQueue, uthread);
+	queue_enqueue(thread_queue, uthread);
 }
 

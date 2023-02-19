@@ -1,7 +1,4 @@
-#include <stddef.h>
 #include <stdlib.h>
-#include <pthread.h>
-
 #include "queue.h"
 #include "sem.h"
 #include "private.h"
@@ -59,7 +56,7 @@ int sem_down(sem_t sem)
 
 void unblock_waiting_thread(sem_t sem) {
 	struct uthread_tcb* new_thread;
-	queue_dequeue(sem->waiting_queue, (void**)&new_thread);
+	queue_dequeue(sem->waiting_queue, (void**) &new_thread);
 	uthread_unblock(new_thread);
 }
 
