@@ -50,8 +50,6 @@ void uthread_exit(void)
 
 int uthread_create(uthread_func_t func, void *arg)
 {
-	preempt_disable();
-
 	/* Create new thread */
 	struct uthread_tcb* new_thread = malloc(sizeof(struct uthread_tcb));
 	new_thread->context = malloc(sizeof(uthread_ctx_t));
@@ -60,9 +58,10 @@ int uthread_create(uthread_func_t func, void *arg)
 
 	/* Initialize thread context and add it to queue */
 	if (uthread_ctx_init(new_thread->context, new_thread->stack_ptr, func, arg) != SUCCESS) {
-		preempt_enable();
 		return ERR;
 	}
+
+	preempt_disable();
 	if (queue_enqueue(thread_queue, new_thread) != SUCCESS) {
 		preempt_enable();
 		return ERR;
