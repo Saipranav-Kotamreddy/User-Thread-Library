@@ -17,22 +17,6 @@ sigset_t signals_to_block;
 sigset_t old_signals;
 bool premption_requested = false;
 
-void preempt_disable(void)
-{
-	if (!premption_requested) {
-		return;
-	}
-	sigprocmask(SIG_BLOCK, &signals_to_block, NULL);
-}
-
-void preempt_enable(void)
-{
-	if (!premption_requested) {
-		return;
-	}
-	sigprocmask(SIG_UNBLOCK, &signals_to_block, NULL);
-}
-
 void handle_alarm () {
 	uthread_yield();
 }
@@ -45,13 +29,17 @@ void setup_alarm_handler() {
 	sigaction(SIGVTALRM, &preempt_action, &old_action);
 }
 
-void setup_timer() {
+void set_timer(bool save_prev_timer) {
 	struct itimerval new_timer_interval;
 	new_timer_interval.it_interval.tv_sec = TIME_INTERVAL_SECONDS;
 	new_timer_interval.it_interval.tv_usec = TIME_INTERVAL_MICROSECONDS;
 	new_timer_interval.it_value.tv_sec = TIME_INTERVAL_SECONDS;
 	new_timer_interval.it_value.tv_usec = TIME_INTERVAL_MICROSECONDS;
-	setitimer(ITIMER_VIRTUAL, &new_timer_interval, &prev_timer_interval);
+	if (save_prev_timer) {
+		setitimer(ITIMER_VIRTUAL, &new_timer_interval, &prev_timer_interval);
+	} else {
+		setitimer(ITIMER_VIRTUAL, &new_timer_interval, NULL);
+	}
 }
 
 void setup_signals_to_block() {
@@ -66,7 +54,7 @@ void preempt_start(bool preempt)
 		return;
 	}
 	premption_requested = true;
-	setup_timer();
+	set_timer(true);
 	setup_signals_to_block();
 	setup_alarm_handler();
 }
@@ -80,3 +68,19 @@ void preempt_stop(void)
 	setitimer(ITIMER_VIRTUAL, &prev_timer_interval, NULL);
 }
 
+void preempt_disable(void)
+{
+	if (!premption_requested) {
+		return;
+	}
+	sigprocmask(SIG_BLOCK, &signals_to_block, NULL);
+}
+
+void preempt_enable(void)
+{
+	if (!premption_requested) {
+		return;
+	}
+	set_timer(false);
+	sigprocmask(SIG_UNBLOCK, &signals_to_block, NULL);
+}
