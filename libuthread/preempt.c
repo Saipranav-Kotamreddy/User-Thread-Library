@@ -18,69 +18,69 @@ sigset_t old_signals;
 bool premption_requested = false;
 
 void handle_alarm () {
-	uthread_yield();
+    uthread_yield();
 }
 
 void setup_alarm_handler() {
-	struct sigaction preempt_action;
-	preempt_action.sa_handler = handle_alarm;
-	sigemptyset(&preempt_action.sa_mask);
-	preempt_action.sa_flags = NO_FLAGS;
-	sigaction(SIGVTALRM, &preempt_action, &old_action);
+    struct sigaction preempt_action;
+    preempt_action.sa_handler = handle_alarm;
+    sigemptyset(&preempt_action.sa_mask);
+    preempt_action.sa_flags = NO_FLAGS;
+    sigaction(SIGVTALRM, &preempt_action, &old_action);
 }
 
 void set_timer(bool save_prev_timer) {
-	struct itimerval new_timer_interval;
-	new_timer_interval.it_interval.tv_sec = TIME_INTERVAL_SECONDS;
-	new_timer_interval.it_interval.tv_usec = TIME_INTERVAL_MICROSECONDS;
-	new_timer_interval.it_value.tv_sec = TIME_INTERVAL_SECONDS;
-	new_timer_interval.it_value.tv_usec = TIME_INTERVAL_MICROSECONDS;
-	if (save_prev_timer) {
-		setitimer(ITIMER_VIRTUAL, &new_timer_interval, &prev_timer_interval);
-	} else {
-		setitimer(ITIMER_VIRTUAL, &new_timer_interval, NULL);
-	}
+    struct itimerval new_timer_interval;
+    new_timer_interval.it_interval.tv_sec = TIME_INTERVAL_SECONDS;
+    new_timer_interval.it_interval.tv_usec = TIME_INTERVAL_MICROSECONDS;
+    new_timer_interval.it_value.tv_sec = TIME_INTERVAL_SECONDS;
+    new_timer_interval.it_value.tv_usec = TIME_INTERVAL_MICROSECONDS;
+    if (save_prev_timer) {
+        setitimer(ITIMER_VIRTUAL, &new_timer_interval, &prev_timer_interval);
+    } else {
+        setitimer(ITIMER_VIRTUAL, &new_timer_interval, NULL);
+    }
 }
 
 void setup_signals_to_block() {
-	sigemptyset(&signals_to_block);
-	sigaddset(&signals_to_block, SIGVTALRM);
-	sigprocmask(SIG_BLOCK, NULL, &old_signals);
+    sigemptyset(&signals_to_block);
+    sigaddset(&signals_to_block, SIGVTALRM);
+    sigprocmask(SIG_BLOCK, NULL, &old_signals);
 }
 
 void preempt_start(bool preempt)
 {
-	if (!preempt) {
-		return;
-	}
-	premption_requested = true;
-	set_timer(true);
-	setup_signals_to_block();
-	setup_alarm_handler();
+    if (!preempt) {
+        return;
+    }
+    premption_requested = true;
+    set_timer(true);
+    setup_signals_to_block();
+    setup_alarm_handler();
 }
 
 void preempt_stop(void)
 {
-	if (!premption_requested) {
-		return;
-	}
-	sigaction(SIGVTALRM, &old_action, NULL);
-	setitimer(ITIMER_VIRTUAL, &prev_timer_interval, NULL);
+    if (!premption_requested) {
+        return;
+    }
+    sigaction(SIGVTALRM, &old_action, NULL);
+    setitimer(ITIMER_VIRTUAL, &prev_timer_interval, NULL);
 }
 
 void preempt_disable(void)
 {
-	if (!premption_requested) {
-		return;
-	}
-	sigprocmask(SIG_BLOCK, &signals_to_block, NULL);
+    if (!premption_requested) {
+        return;
+    }
+    sigprocmask(SIG_BLOCK, &signals_to_block, NULL);
 }
 
 void preempt_enable(void)
 {
-	if (!premption_requested) {
-		return;
-	}
-	set_timer(false);
-	sigprocmask(SIG_UNBLOCK, &signals_to_block, NULL);
+    if (!premption_requested) {
+        return;
+    }
+    set_timer(false);
+    sigprocmask(SIG_UNBLOCK, &signals_to_block, NULL);
 }
