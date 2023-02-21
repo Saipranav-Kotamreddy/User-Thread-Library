@@ -16,6 +16,10 @@ sem_t sem_create(size_t count)
 	sem_t sem = malloc(sizeof(struct semaphore));
 	sem->curr_count = count;
 	sem->waiting_queue = queue_create();
+	if (sem->waiting_queue == NULL) {
+		free(sem);
+		return NULL;
+	}
 	return sem;
 }
 
