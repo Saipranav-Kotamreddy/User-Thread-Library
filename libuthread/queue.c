@@ -29,7 +29,7 @@ queue_t queue_create(void)
 
 int queue_destroy(queue_t queue)
 {
-     if(queue == NULL || queue->length != 0){
+     if (queue == NULL || queue->length != 0) {
          return ERR;
      }
      free(queue);
@@ -38,19 +38,19 @@ int queue_destroy(queue_t queue)
 
 int queue_enqueue(queue_t queue, void *data)
 {
-     if(queue == NULL || data==NULL){
+     if (queue == NULL || data==NULL) {
          return ERR;
      }
 
      struct node* node = malloc(sizeof(struct node));
-     if(node == NULL){
+     if (node == NULL) {
          return ERR;
      }
 
      node->dataPointer = data;
      node->nextNode = NULL;
 
-     if(queue->firstNode == NULL){
+     if (queue->firstNode == NULL) {
          queue->firstNode = node;
         queue->lastNode = node;
      }
@@ -65,7 +65,7 @@ int queue_enqueue(queue_t queue, void *data)
 
 int queue_dequeue(queue_t queue, void **data)
 {
-     if(queue == NULL || data == NULL || queue->length == 0){
+     if (queue == NULL || data == NULL || queue->length == 0) {
          return ERR;
      }
 
@@ -81,29 +81,29 @@ int queue_dequeue(queue_t queue, void **data)
 
 int queue_delete(queue_t queue, void *data)
 {
-     if(queue == NULL || data == NULL){
+     if (queue == NULL || data == NULL) {
          return ERR;
      }
-     if(queue->length == 0){
+     if (queue->length == 0) {
          return ERR;
      }
 
      struct node* currentNode = queue->firstNode;
      struct node* prevNode;
-     if(currentNode->dataPointer == data){
+     if (currentNode->dataPointer == data) {
          queue->firstNode = currentNode->nextNode;
          free(currentNode);
          queue->length--;
          return OK;
      }
 
-     while(currentNode->nextNode != NULL){
+     while (currentNode->nextNode != NULL) {
          prevNode = currentNode;
          currentNode = currentNode->nextNode;
          
-        if(currentNode->dataPointer == data){
+        if (currentNode->dataPointer == data) {
              
-            if(currentNode == queue->lastNode){
+            if (currentNode == queue->lastNode) {
                  queue->lastNode = prevNode;
                  prevNode->nextNode = NULL;
                  free(currentNode);
@@ -123,16 +123,16 @@ int queue_delete(queue_t queue, void *data)
 
 int queue_iterate(queue_t queue, queue_func_t func)
 {
-     if(queue == NULL || func == NULL){
+     if (queue == NULL || func == NULL) {
          return ERR;
      }
-     if(queue->length == 0){
+     if (queue->length == 0) {
          return OK;
      }
 
      struct node* currentNode = queue->firstNode;
      func(queue, currentNode->dataPointer);
-     while(currentNode->nextNode != NULL){
+     while (currentNode->nextNode != NULL) {
          currentNode = currentNode->nextNode;
          func(queue, currentNode->dataPointer);
      }
